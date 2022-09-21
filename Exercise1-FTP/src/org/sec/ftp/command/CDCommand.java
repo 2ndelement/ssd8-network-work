@@ -1,5 +1,6 @@
-package org.sec.ftp.server.command;
+package org.sec.ftp.command;
 
+import org.sec.ftp.client.FileClient;
 import org.sec.ftp.server.ServiceHandler;
 
 import java.io.File;
@@ -47,5 +48,10 @@ public class CDCommand extends Command {
                 serviceHandler.sendMessage("unknown dir");
             }
         }
+    }
+
+    @Override
+    public void handle(FileClient client, String[] args) {
+
     }
 }

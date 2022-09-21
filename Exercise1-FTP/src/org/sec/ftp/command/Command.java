@@ -1,5 +1,6 @@
-package org.sec.ftp.server.command;
+package org.sec.ftp.command;
 
+import org.sec.ftp.client.FileClient;
 import org.sec.ftp.server.ServiceHandler;
 
 import java.util.HashMap;
@@ -20,12 +21,26 @@ public abstract class Command {
     }
 
     /**
+     * 定义命令执行方式
+     *
+     * @param name 命令名
+     */
+    public Command(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    /**
      * 执行命令
      *
      * @param serviceHandler  单用户服务处理器
      * @param commandWithArgs 命令和参数
      */
     public abstract void execute(ServiceHandler serviceHandler, String[] commandWithArgs);
+
 
     /**
      * 让jvm加载类文件，注册命令
@@ -34,14 +49,6 @@ public abstract class Command {
         // do nothing
     }
 
-    /**
-     * 定义命令执行方式
-     *
-     * @param name 命令名
-     */
-    public Command(String name) {
-        this.name = name;
-    }
 
     /**
      * 获取命令执行实例
@@ -61,9 +68,6 @@ public abstract class Command {
         return false;
     }
 
-    public String getName() {
-        return name;
-    }
 
     /**
      * 注册命令
@@ -74,4 +78,6 @@ public abstract class Command {
         commandMap.put(command.getName(), command);
         System.out.println("register command: " + command.getName());
     }
+
+    public abstract void handle(FileClient client, String[] args);
 }

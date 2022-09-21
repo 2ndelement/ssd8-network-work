@@ -1,6 +1,6 @@
 package org.sec.ftp.server;
 
-import org.sec.ftp.server.command.Command;
+import org.sec.ftp.command.Command;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,15 +11,25 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class FileServer {
-    /** 标准输出 */
+    /**
+     * 标准输出
+     */
     public static PrintWriter stdout = new PrintWriter(System.out, true);
-    /** 错误输出 */
+    /**
+     * 错误输出
+     */
     public static PrintWriter stderr = new PrintWriter(System.err, true);
-    /** 根目录 */
+    /**
+     * 根目录
+     */
     private final String rootDir;
-    /** 服务套接字 */
+    /**
+     * 服务套接字
+     */
     private final ServerSocket serverSocket;
-    /** 线程池 */
+    /**
+     * 线程池
+     */
     private final ExecutorService executor;
 
     public FileServer(String rootDir) throws IOException {
@@ -58,6 +68,7 @@ public class FileServer {
                 workDir = args[0];
             } else {
                 stderr.println(Constants.ILLEGAL_DIR_STRING);
+                return;
             }
         }
         try {

@@ -1,5 +1,6 @@
-package org.sec.ftp.server.command;
+package org.sec.ftp.command;
 
+import org.sec.ftp.client.FileClient;
 import org.sec.ftp.server.Constants;
 import org.sec.ftp.server.ServiceHandler;
 
@@ -40,5 +41,9 @@ public class LSCommand extends Command {
                 serviceHandler.sendMessage(Constants.LS_DIR_STRING.replace("<name>", "%-60s".formatted(file.getName())).replace("<length>", "%12d".formatted(file.length())));
             }
         }
+    }
+
+    @Override
+    public void handle(FileClient client, String[] args) {
     }
 }

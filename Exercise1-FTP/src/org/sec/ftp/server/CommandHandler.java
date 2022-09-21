@@ -1,6 +1,6 @@
 package org.sec.ftp.server;
 
-import org.sec.ftp.server.command.Command;
+import org.sec.ftp.command.Command;
 
 
 public class CommandHandler {

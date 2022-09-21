@@ -24,9 +24,9 @@ public class ServiceHandler implements Runnable {
 
     public ServiceHandler(Socket socket, String rootDir) throws IOException {
         this.socket = socket;
+        this.commandHandler = new CommandHandler(this);
         this.currentDir = new File(rootDir);
         this.rootDir = new File(rootDir);
-        this.commandHandler = new CommandHandler(this);
         this.server = new DatagramSocket();
         this.packet = new DatagramPacket(new byte[Constants.BUFFER_SIZE], Constants.BUFFER_SIZE, socket.getInetAddress(), Constants.DATA_PORT);
     }

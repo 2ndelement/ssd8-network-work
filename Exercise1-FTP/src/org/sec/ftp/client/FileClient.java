@@ -9,6 +9,7 @@ public class FileClient {
     public static PrintWriter stderr = new PrintWriter(System.err, true);
     public static Scanner stdin = new Scanner(System.in);
     private DatagramSocket datagramSocket;
+    private CommandHandler commandHandler;
     private DatagramPacket packet;
     private Socket socket;
     private String host;
@@ -16,18 +17,9 @@ public class FileClient {
     private BufferedWriter bw;
     private PrintWriter pw;
 
-
-    /**
-     * 初始化流
-     */
-    public void initStream() throws IOException {
-        br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        bw = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-        pw = new PrintWriter(bw, true);
-    }
-
     public FileClient(String host) {
         this.host = host;
+        this.commandHandler = new CommandHandler(this);
         try {
             datagramSocket = new DatagramSocket(Constants.DATA_PORT);
         } catch (SocketException e) {
@@ -45,40 +37,12 @@ public class FileClient {
             if (confirmMsg == null || !confirmMsg.endsWith("连接成功")) {
                 stderr.println("连接异常,未收到服务端回应");
             } else {
-                stdout.println(confirmMsg);
-                String commandAndArgs;
                 String command;
-                String message;
+                stdout.println(confirmMsg);
                 // 循环接受本地终端输入，使用不同的命令处理逻辑进行
                 while (true) {
-                    commandAndArgs = stdin.nextLine();
-                    command = commandAndArgs.split(" ")[0];
-                    if ("".equals(command)) {
-                        continue;
-                    }
-                    // 如果是结束命令将退出循环关闭客户端，服务端会自动回收线程
-                    if (Constants.END_COMMAND.equals(command)) {
-                        break;
-                    }
-                    //发送命令
-                    pw.println(commandAndArgs);
-
-                    // 如果是GET命令开始进行与服务端协议的操作
-                    if (Constants.GET_COMMAND.equals(command)) {
-                        // 先读取是否能正常发送的信号并验证
-                        String info = br.readLine();
-                        if (Constants.CAN_GET_MARK.equals(info)) {
-                            // 能发送，进入接受操作
-                            receiveFile();
-                        } else {
-                            stderr.println(info);
-                        }
-                    }
-                    // 等待服务端发送结束信号，输出信号前的所有消息
-                    while (!Constants.END_MARK.equals(message = br.readLine())) {
-                        stdout.println(message);
-                    }
-
+                    command = stdin.nextLine();
+                    commandHandler.handleCommand(command);
                 }
             }
         } catch (ConnectException e) {
@@ -96,10 +60,31 @@ public class FileClient {
         }
     }
 
+    public void info(String message) {
+        stdout.println(message);
+    }
+
+    public void error(String message) {
+        stderr.println(message);
+    }
+
+    /**
+     * 初始化流
+     */
+    public void initStream() throws IOException {
+        br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        bw = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+        pw = new PrintWriter(bw, true);
+    }
+
+    public void sendMessage(String message) {
+        pw.println(message);
+    }
+
     /**
      * 通过udp协议接受文件
      */
-    private void receiveFile() throws IOException {
+    public void receiveFile() throws IOException {
         // 获取文件名
         String filename = br.readLine();
         // 获取文件长度
@@ -133,5 +118,10 @@ public class FileClient {
 
         FileClient client = new FileClient(hostname);
         client.run();
+    }
+
+    public String readLine() throws IOException {
+
+        return br.readLine();
     }
 }

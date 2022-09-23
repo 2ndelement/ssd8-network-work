@@ -32,9 +32,9 @@ public class FileServer {
      */
     private final ExecutorService executor;
 
-    public FileServer(String rootDir) throws IOException {
-        Command.init();
+    public FileServer(String rootDir) throws IOException, ClassNotFoundException {
         this.rootDir = rootDir;
+        Class.forName(Command.class.getName());
         serverSocket = new ServerSocket(Constants.COMMAND_PORT);
         executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * Constants.POOL_SIZE);
     }
@@ -58,7 +58,7 @@ public class FileServer {
      * 处理主程序输入参数，并验证合法
      */
     public static void main(String[] args) {
-        String workDir = null;
+        String workDir;
         if (args.length == 0) {
             stderr.println(Constants.USAGE_STRING);
             return;
@@ -76,6 +76,8 @@ public class FileServer {
             server.service();
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 

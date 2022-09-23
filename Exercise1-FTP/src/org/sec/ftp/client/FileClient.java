@@ -1,37 +1,45 @@
 package org.sec.ftp.client;
 
+import org.sec.ftp.command.Command;
+
 import java.io.*;
 import java.net.*;
 import java.util.Scanner;
 
 public class FileClient {
+    private Socket socket;
+    private PrintWriter pw;
+    private BufferedReader br;
+    private final String host;
+    private final DatagramPacket packet;
+    private DatagramSocket datagramSocket;
+    private final CommandHandler commandHandler;
+    public static Scanner stdin = new Scanner(System.in);
+
     public static PrintWriter stdout = new PrintWriter(System.out, true);
     public static PrintWriter stderr = new PrintWriter(System.err, true);
-    public static Scanner stdin = new Scanner(System.in);
-    private DatagramSocket datagramSocket;
-    private CommandHandler commandHandler;
-    private DatagramPacket packet;
-    private Socket socket;
-    private String host;
-    private BufferedReader br;
-    private BufferedWriter bw;
-    private PrintWriter pw;
+
 
     public FileClient(String host) {
         this.host = host;
         this.commandHandler = new CommandHandler(this);
+        this.packet = new DatagramPacket(new byte[Constants.BUFFER_SIZE], Constants.BUFFER_SIZE);
         try {
             datagramSocket = new DatagramSocket(Constants.DATA_PORT);
         } catch (SocketException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
-        packet = new DatagramPacket(new byte[Constants.BUFFER_SIZE], Constants.BUFFER_SIZE);
+
     }
 
+    /**
+     * 客户端启动连接服务器,收到服务器成功信息后开始接收命令
+     */
     public void run() {
         try {
             socket = new Socket(host, Constants.COMMAND_PORT);
             initStream();
+
             // 接受第一条确认连接信息
             String confirmMsg = br.readLine();
             if (confirmMsg == null || !confirmMsg.endsWith("连接成功")) {
@@ -69,29 +77,50 @@ public class FileClient {
     }
 
     /**
-     * 初始化流
+     * 初始化Socket输入流{@link #br}, 输出流{@link  #pw}
      */
     public void initStream() throws IOException {
         br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        bw = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
         pw = new PrintWriter(bw, true);
     }
 
+    /**
+     * 为{@link org.sec.ftp.command.Command}提供的获取服务端消息的接口
+     *
+     * @return 从服务端接受的消息
+     */
+    public String readMessage() throws IOException {
+
+        return br.readLine();
+    }
+
+    /**
+     * 为{@link org.sec.ftp.command.Command}提供的消息发送接口
+     *
+     * @param message 发送的消息
+     */
     public void sendMessage(String message) {
         pw.println(message);
     }
 
     /**
-     * 通过udp协议接受文件
+     * 按照和服务端约定的协议通过udp协议接受文件<br>
+     * 首先接受文件名，然后接受文件大小，最后接受文件内容
      */
     public void receiveFile() throws IOException {
         // 获取文件名
         String filename = br.readLine();
-        // 获取文件长度
+
+        // 获取文件大小
         int totalSize = Integer.parseInt(br.readLine());
+
+
         int tmpSize = totalSize;
         FileOutputStream fos = new FileOutputStream(filename);
-        // 收数据并展示进度
+
+        // 收数据并渲染进度条
+        stdout.println("\u001b[36m" + filename + " 正在接收中..." + "\u001b[0m");
         stdout.print("00.00%");
         while (tmpSize > 0) {
             datagramSocket.receive(packet);
@@ -102,13 +131,20 @@ public class FileClient {
                 fos.flush();
                 tmpSize -= len;
             }
-            stdout.print("\b\b\b\b\b\b");
+            stdout.print("\b\b\b\b\b\b\b\b\b");
         }
+        info("\u001b[36m%s\u001b[0m 接受完毕, 共 \u001b[35m%d\u001b[0m bytes".formatted(filename, totalSize));
         fos.close();
     }
 
     public static void main(String[] args) {
+        try {
+            Class.forName(Command.class.getName());
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
         String hostname;
+
         if (args.length == 0) {
             stderr.println(Constants.USAGE_STRING);
             return;
@@ -120,8 +156,5 @@ public class FileClient {
         client.run();
     }
 
-    public String readLine() throws IOException {
 
-        return br.readLine();
-    }
 }

@@ -14,6 +14,12 @@ public class LSCommand extends Command {
         super("ls");
     }
 
+    /**
+     * 服务端执行命令逻辑
+     *
+     * @param serviceHandler  单用户服务处理器 {@link ServiceHandler}
+     * @param commandWithArgs 命令和参数
+     */
     public void execute(ServiceHandler serviceHandler, String[] commandWithArgs) {
         File[] files;
         if (commandWithArgs.length == 1) {
@@ -43,6 +49,12 @@ public class LSCommand extends Command {
         }
     }
 
+    /**
+     * 客户端执行命令逻辑
+     *
+     * @param client 客户端 {@link FileClient}
+     * @param args   命令和参数
+     */
     @Override
     public void handle(FileClient client, String[] args) {
     }

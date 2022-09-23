@@ -15,9 +15,12 @@ public abstract class Command {
 
     // 注册命令，新命令在此注册即可运行
     static {
-        register(new CDCommand());
-        register(new GETCommand());
-        register(new LSCommand());
+        register(
+                new CDCommand(),
+                new LSCommand(),
+                new GETCommand()
+        );
+
     }
 
     /**
@@ -32,23 +35,6 @@ public abstract class Command {
     public String getName() {
         return name;
     }
-
-    /**
-     * 执行命令
-     *
-     * @param serviceHandler  单用户服务处理器
-     * @param commandWithArgs 命令和参数
-     */
-    public abstract void execute(ServiceHandler serviceHandler, String[] commandWithArgs);
-
-
-    /**
-     * 让jvm加载类文件，注册命令
-     */
-    public static void init() {
-        // do nothing
-    }
-
 
     /**
      * 获取命令执行实例
@@ -68,16 +54,33 @@ public abstract class Command {
         return false;
     }
 
-
     /**
      * 注册命令
      *
-     * @param command 命令实例
+     * @param aliases 命令实例
      */
-    public static void register(Command command) {
-        commandMap.put(command.getName(), command);
-        System.out.println("register command: " + command.getName());
+    public static void register(Command... aliases) {
+        StringBuilder info = new StringBuilder();
+        for (Command alias : aliases) {
+            commandMap.put(alias.getName(), alias);
+            info.append('<').append(alias.getName()).append("> ");
+        }
+        System.out.println("加载命令: \033[36m" + info + "\033[0m");
     }
 
+    /**
+     * 服务端执行命令逻辑
+     *
+     * @param serviceHandler  单用户服务处理器 {@link ServiceHandler}
+     * @param commandWithArgs 命令和参数
+     */
+    public abstract void execute(ServiceHandler serviceHandler, String[] commandWithArgs);
+
+    /**
+     * 客户端执行命令逻辑
+     *
+     * @param client 客户端 {@link FileClient}
+     * @param args   命令和参数
+     */
     public abstract void handle(FileClient client, String[] args);
 }

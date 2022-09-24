@@ -30,7 +30,7 @@ public class LSCommand extends Command {
                 if (tmpFile.exists() && tmpFile.isDirectory() && tmpFile.getCanonicalPath().startsWith(serviceHandler.getRootDir().getCanonicalPath())) {
                     files = tmpFile.listFiles();
                 } else {
-                    serviceHandler.sendMessage("unknown dir");
+                    serviceHandler.sendMessage(Constants.ILLEGAL_MARK);
                     return;
                 }
             } catch (IOException e) {
@@ -40,12 +40,15 @@ public class LSCommand extends Command {
         if (files == null) {
             return;
         }
+        StringBuilder msg = new StringBuilder();
         for (File file : files) {
-            if (file.isFile()) {
-                serviceHandler.sendMessage(Constants.LS_FILE_STRING.replace("<name>", "%-60s".formatted(file.getName())).replace("<length>", "%12d".formatted(file.length())));
-            } else if (file.isDirectory()) {
-                serviceHandler.sendMessage(Constants.LS_DIR_STRING.replace("<name>", "%-60s".formatted(file.getName())).replace("<length>", "%12d".formatted(file.length())));
-            }
+            msg.append(file.isFile() ? 'f' : 'd').append(Constants.DELIM).append(file.getName());
+            msg.append(Constants.DELIM).append(file.length()).append(Constants.DELIM);
+        }
+        if (!"".equals(msg.toString())) {
+            serviceHandler.sendMessage(msg.substring(0, msg.length() - 1));
+        } else {
+            serviceHandler.sendMessage(Constants.DELIM);
         }
     }
 
@@ -57,5 +60,27 @@ public class LSCommand extends Command {
      */
     @Override
     public void handle(FileClient client, String[] args) {
+        try {
+            String msg = client.readMessage();
+            if ("".equals(msg) || msg == null) {
+                return;
+            }
+            if (Constants.ILLEGAL_MARK.equals(msg)) {
+                client.error("unknown dir");
+            } else {
+                String[] fileAndLengths = msg.split(Constants.DELIM);
+                for (int i = 0; i < fileAndLengths.length; i += 3) {
+                    if ("f".equals(fileAndLengths[i])) {
+                        client.info(String.format(String.format(Constants.LS_FILE_STRING.replace("<name>", "%-60s"), fileAndLengths[i + 1])
+                                .replace("<length>", "%12s"), fileAndLengths[i + 2]));
+                    } else {
+                        client.info(String.format(String.format(Constants.LS_DIR_STRING.replace("<name>", "%-60s"), fileAndLengths[i + 1])
+                                .replace("<length>", "%12s"), fileAndLengths[i + 2]));
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -23,22 +23,34 @@ public class CommandHandler {
      * @param originalCommand 处理一个命令
      */
     public void handleCommand(String originalCommand) throws IOException {
-        String command = originalCommand.split(" ")[0];
+        if ("".equals(originalCommand.trim())) {
+            return;
+        }
+        String[] commandWithArgs = Command.parseCommandString(originalCommand);
+        if (commandWithArgs.length == 0) {
+            return;
+        }
+        String command = commandWithArgs[0];
         // 如果是结束命令将关闭客户端，服务端会自动回收线程
         if (Constants.END_COMMAND.equals(command)) {
             System.exit(0);
         }
 
         //发送命令
-        client.sendMessage(originalCommand);
-        if (Command.isLegalCommand(command)) {
-            Command.get(command).handle(client, originalCommand.split(" "));
-        }
 
+        if (Command.isLegalCommand(command)) {
+            client.sendMessage(originalCommand);
+            Command.get(command).handle(client, commandWithArgs);
+        } else {
+            client.error(Constants.UNKNOWN_COMMAND_STRING);
+            return;
+        }
         // 等待服务端发送结束信号，输出信号前的所有消息
         String message;
         while (!Constants.END_MARK.equals(message = client.readMessage())) {
-            client.info(message);
+            if (!"".equals(message) && message != null) {
+                client.info(message);
+            }
         }
 
     }

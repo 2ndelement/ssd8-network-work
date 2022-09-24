@@ -1,6 +1,7 @@
 package org.sec.ftp.command;
 
 import org.sec.ftp.client.FileClient;
+import org.sec.ftp.server.Constants;
 import org.sec.ftp.server.ServiceHandler;
 
 import java.io.File;
@@ -23,12 +24,12 @@ public class CDCommand extends Command {
         // 无参数回到根目录
         if (commandWithArgs.length == 1) {
             serviceHandler.backRoot();
-            serviceHandler.sendMessage("\u001b[36m%s~\u001b0m > ok");
+            serviceHandler.sendMessage("~");
         } else {
             // 有参数解析文件夹路径判断是否合法并跳转到文件夹
             File intoDir;
             String arg = commandWithArgs[1];
-            arg = arg.replace("\\", "/");
+            arg = arg.replace("\\", "/").replace("~", "/");
             // 是否相对根目录跳转
             if (arg.startsWith("/")) {
                 intoDir = new File(serviceHandler.getRootDir(), arg);
@@ -42,16 +43,20 @@ public class CDCommand extends Command {
                     // 判断跳转目录是否在根目录下，不在则返回根目录
                     if (intoDir.getAbsolutePath().startsWith(serviceHandler.getRootDir().getCanonicalPath())) {
                         serviceHandler.setCurrentDir(intoDir);
-                        serviceHandler.sendMessage("[36m"+intoDir.getAbsolutePath().replace(serviceHandler.getRootDir().getCanonicalPath(), "~") + "\u001b[0m > ok");
+                        String msg = intoDir.getAbsolutePath().replace(serviceHandler.getRootDir().getCanonicalPath(), "~");
+                        if (msg.endsWith("\\") || msg.endsWith("/")) {
+                            msg = msg.substring(0, msg.length() - 1);
+                        }
+                        serviceHandler.sendMessage(msg);
                     } else {
                         serviceHandler.backRoot();
-                        serviceHandler.sendMessage("~ > ok");
+                        serviceHandler.sendMessage("~");
                     }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             } else {
-                serviceHandler.sendMessage("unknown dir");
+                serviceHandler.sendMessage(Constants.ILLEGAL_MARK);
             }
         }
     }
@@ -64,6 +69,19 @@ public class CDCommand extends Command {
      */
     @Override
     public void handle(FileClient client, String[] args) {
+        try {
+            String msg = client.readMessage();
+            if (Constants.ILLEGAL_MARK.equals(msg)) {
+                client.error("unknown dir");
+            } else {
+                if (!client.getCurrentDir().equals(msg)) {
+                    client.setCurrentDir(msg);
+                    client.info("[36m" + msg + "[0m > ok");
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
     }
 }

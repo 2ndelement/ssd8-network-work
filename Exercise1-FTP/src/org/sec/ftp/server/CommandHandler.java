@@ -2,6 +2,8 @@ package org.sec.ftp.server;
 
 import org.sec.ftp.command.Command;
 
+import java.util.ArrayList;
+
 
 public class CommandHandler {
     private final ServiceHandler serviceHandler;
@@ -17,18 +19,12 @@ public class CommandHandler {
      * @param originalCommand 带参数待处理命令
      */
     public void handleCommand(String originalCommand) {
-        String[] commandWithArgs = originalCommand.split("\s(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
-        for (int i = 0; i < commandWithArgs.length; i++) {
-            commandWithArgs[i] = commandWithArgs[i].replaceAll("\"", "");
-        }
+        String[] commandWithArgs = Command.parseCommandString(originalCommand);
         if (commandWithArgs.length == 0) {
-            serviceHandler.sendMessage("unknown command");
             return;
         }
         if (Command.isLegalCommand(commandWithArgs[0])) {
             Command.get(commandWithArgs[0]).execute(serviceHandler, commandWithArgs);
-        } else {
-            serviceHandler.sendMessage("unknown command");
         }
     }
 }

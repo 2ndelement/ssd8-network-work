@@ -13,4 +13,5 @@ public class Constants extends PublicConstants {
     /** 客户端的结束命令 */
     public static final String END_COMMAND = "bye";
 
+    public static final String UNKNOWN_COMMAND_STRING = "unknown command";
 }

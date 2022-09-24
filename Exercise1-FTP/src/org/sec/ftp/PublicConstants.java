@@ -14,6 +14,7 @@ public class PublicConstants {
      * UDP传输文件端口号
      */
     public static final int DATA_PORT = 2020;
+    public static final String DELIM = ":";
     /**
      * udp单个数据包大小
      */
@@ -21,13 +22,14 @@ public class PublicConstants {
     /**
      * 命令结束标志
      */
-    public static final String END_MARK = "_ov";
+    public static final String END_MARK = ":ov";
     /**
      * GET时能开始传输文件的标志
      */
-    public static final String CAN_GET_MARK = "_gok";
+    public static final String ILLEGAL_MARK = ":ill";
+    public static final String CAN_GET_MARK = ":gok";
     /**
      * 文件全部传输完毕标志
      */
-    public static final String SEND_FILES_END_MARK = "_sok";
+    public static final String SEND_FILES_END_MARK = ":sok";
 }

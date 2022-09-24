@@ -3,6 +3,7 @@ package org.sec.ftp.command;
 import org.sec.ftp.client.FileClient;
 import org.sec.ftp.server.ServiceHandler;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,6 +37,17 @@ public abstract class Command {
         return name;
     }
 
+    public static String[] parseCommandString(String originalCommand) {
+        String[] midProductArgs = originalCommand.split("\\s(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+        ArrayList<String> commandWithArgsList = new ArrayList<>(midProductArgs.length);
+        for (String midProductArg : midProductArgs) {
+            if (!"".equals(midProductArg) && midProductArg != null)
+                commandWithArgsList.add(midProductArg.replaceAll("\"", ""));
+        }
+        return commandWithArgsList.toArray(new String[0]);
+    }
+
+
     /**
      * 获取命令执行实例
      *
@@ -65,7 +77,7 @@ public abstract class Command {
             commandMap.put(alias.getName(), alias);
             info.append('<').append(alias.getName()).append("> ");
         }
-        System.out.println("加载命令: \033[36m" + info + "\033[0m");
+        System.out.println("加载命令: [36m" + info + "[0m");
     }
 
     /**

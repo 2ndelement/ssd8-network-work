@@ -1,9 +1,12 @@
 package org.sec.ftp.server;
 
+import org.sec.ftp.client.FileClient;
+
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -51,8 +54,9 @@ public class ServiceHandler implements Runnable {
             while ((command = br.readLine()) != null) {
                 handleCommand(command);
             }
+
         } catch (IOException e) {
-            e.printStackTrace();
+
         } finally {
             try {
                 FileServer.stdout.println(socket.getRemoteSocketAddress() + ">已断开");
@@ -133,13 +137,13 @@ public class ServiceHandler implements Runnable {
     /**
      * 将文件通过udp发送出去，预先将依次发送 文件名，文件长度
      * 然后再发送文件数据包
+     * {@link FileClient#receiveFile()}
      *
      * @param file 待发送的文件
      */
     public void sendFile(File file) {
         try {
-            pw.println(file.getName());
-            pw.println(file.length());
+            pw.println(file.getName() + Constants.DELIM + file.length());
             FileInputStream fis = new FileInputStream(file);
             byte[] buffer = new byte[Constants.BUFFER_SIZE];
             int len;

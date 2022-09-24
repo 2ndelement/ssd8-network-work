@@ -1,19 +1,24 @@
 package org.sec.ftp.client;
 
+import org.omg.CORBA.TIMEOUT;
 import org.sec.ftp.command.Command;
 
 import java.io.*;
 import java.net.*;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 public class FileClient {
     private Socket socket;
     private PrintWriter pw;
+
+    private String currentDir;
     private BufferedReader br;
     private final String host;
     private final DatagramPacket packet;
     private DatagramSocket datagramSocket;
     private final CommandHandler commandHandler;
+
     public static Scanner stdin = new Scanner(System.in);
 
     public static PrintWriter stdout = new PrintWriter(System.out, true);
@@ -22,6 +27,7 @@ public class FileClient {
 
     public FileClient(String host) {
         this.host = host;
+        this.currentDir = "~";
         this.commandHandler = new CommandHandler(this);
         this.packet = new DatagramPacket(new byte[Constants.BUFFER_SIZE], Constants.BUFFER_SIZE);
         try {
@@ -49,6 +55,13 @@ public class FileClient {
                 stdout.println(confirmMsg);
                 // 循环接受本地终端输入，使用不同的命令处理逻辑进行
                 while (true) {
+                    try {
+                        TimeUnit.MICROSECONDS.sleep(100);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    stdout.print("\u001B[32m➜\u001B[0m \u001B[36m" + currentDir + "\u001B[0m ");
+                    stdout.flush();
                     command = stdin.nextLine();
                     commandHandler.handleCommand(command);
                 }
@@ -68,12 +81,20 @@ public class FileClient {
         }
     }
 
+    public String getCurrentDir() {
+        return this.currentDir;
+    }
+
+    public void setCurrentDir(String msg) {
+        this.currentDir = msg;
+    }
+
     public void info(String message) {
         stdout.println(message);
     }
 
     public void error(String message) {
-        stderr.println(message);
+        stdout.println("\u001B[31m" + message + "\u001B[0m");
     }
 
     /**
@@ -107,33 +128,36 @@ public class FileClient {
     /**
      * 按照和服务端约定的协议通过udp协议接受文件<br>
      * 首先接受文件名，然后接受文件大小，最后接受文件内容
+     * {@link org.sec.ftp.server.ServiceHandler#sendFile}
      */
     public void receiveFile() throws IOException {
         // 获取文件名
-        String filename = br.readLine();
-
+        String[] filenameAndLength = br.readLine().split(Constants.DELIM);
+        String filename = filenameAndLength[0];
+        String length = filenameAndLength[1];
         // 获取文件大小
-        int totalSize = Integer.parseInt(br.readLine());
+        int totalSize = Integer.parseInt(length);
 
-
-        int tmpSize = totalSize;
         FileOutputStream fos = new FileOutputStream(filename);
 
         // 收数据并渲染进度条
-        stdout.println("\u001b[36m" + filename + " 正在接收中..." + "\u001b[0m");
+        stdout.print("\u001B[36m" + filename + "\u001b[0m" + " 正在接收中... ");
         stdout.print("00.00%");
-        while (tmpSize > 0) {
+        int cnt = totalSize / Constants.BUFFER_SIZE + 1;
+        int tmpSize = 0;
+        for (int i = 0; i < cnt; i++) {
             datagramSocket.receive(packet);
             int len = packet.getLength();
+            tmpSize += len;
             if (len > 0) {
                 fos.write(packet.getData(), 0, len);
-                stdout.printf("\b\b\b\b\b\b%.2f%%", (float) (totalSize - tmpSize) * 100 / totalSize);
+                stdout.printf("\b\b\b\b\b\b%05.2f%%", (float) (tmpSize) * 100 / totalSize);
                 fos.flush();
-                tmpSize -= len;
             }
-            stdout.print("\b\b\b\b\b\b\b\b\b");
+
         }
-        info("\u001b[36m%s\u001b[0m 接受完毕, 共 \u001b[35m%d\u001b[0m bytes".formatted(filename, totalSize));
+        stdout.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+        stdout.printf("接受完毕, 共 \u001b[35m%d\u001b[0m bytes\n", totalSize);
         fos.close();
     }
 

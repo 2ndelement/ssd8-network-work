@@ -6,7 +6,7 @@ import org.sec.ftp.server.ServiceHandler;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 public class GETCommand extends Command {
     public GETCommand() {

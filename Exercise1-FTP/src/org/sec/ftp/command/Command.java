@@ -42,7 +42,7 @@ public abstract class Command {
         ArrayList<String> commandWithArgsList = new ArrayList<>(midProductArgs.length);
         for (String midProductArg : midProductArgs) {
             if (!"".equals(midProductArg) && midProductArg != null)
-                commandWithArgsList.add(midProductArg.replaceAll("\"", ""));
+                commandWithArgsList.add(midProductArg.replaceAll("\"", "").trim());
         }
         return commandWithArgsList.toArray(new String[0]);
     }

@@ -22,6 +22,7 @@ public class PublicConstants {
     /**
      * 命令结束标志
      */
+    public static final String CONNECT_SUC_MARK = ":cok";
     public static final String END_MARK = ":ov";
     /**
      * GET时能开始传输文件的标志

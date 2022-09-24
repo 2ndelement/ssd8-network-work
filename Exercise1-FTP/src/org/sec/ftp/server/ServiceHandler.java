@@ -49,7 +49,7 @@ public class ServiceHandler implements Runnable {
         FileServer.stdout.println(successInfo);
         try {
             initStream();
-            pw.println(successInfo);
+            pw.println(Constants.CONNECT_SUC_MARK);
             String command;
             while ((command = br.readLine()) != null) {
                 handleCommand(command);
@@ -111,7 +111,7 @@ public class ServiceHandler implements Runnable {
      * @param command 待处理命令
      */
     public void handleCommand(String command) {
-        FileServer.stdout.println(socket.getRemoteSocketAddress() + ">收到命令\033[36m" + command + "\033[0m");
+        FileServer.stdout.println(socket.getRemoteSocketAddress() + ">收到命令 \033[36m" + command + "\033[0m");
         commandHandler.handleCommand(command);
         pw.println(Constants.END_MARK);
 

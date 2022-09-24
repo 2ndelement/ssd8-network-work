@@ -48,11 +48,16 @@ public class FileClient {
 
             // 接受第一条确认连接信息
             String confirmMsg = br.readLine();
-            if (confirmMsg == null || !confirmMsg.endsWith("连接成功")) {
+            if (!Constants.CONNECT_SUC_MARK.equals(confirmMsg)) {
                 stderr.println("连接异常,未收到服务端回应");
             } else {
                 String command;
-                stdout.println(confirmMsg);
+                stdout.println(Constants.WELCOME_STRING);
+                try {
+                    Class.forName(Command.class.getName());
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
                 // 循环接受本地终端输入，使用不同的命令处理逻辑进行
                 while (true) {
                     try {
@@ -60,7 +65,7 @@ public class FileClient {
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                    stdout.print("\u001B[32m➜\u001B[0m \u001B[36m" + currentDir + "\u001B[0m ");
+                    stdout.print(String.format(Constants.UI_THEME.replace("<dir>", currentDir)));
                     stdout.flush();
                     command = stdin.nextLine();
                     commandHandler.handleCommand(command);
@@ -156,17 +161,12 @@ public class FileClient {
             }
 
         }
-        stdout.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
-        stdout.printf("接受完毕, 共 \u001b[35m%d\u001b[0m bytes\n", totalSize);
+        stdout.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+        stdout.printf("接收完毕, 共 \u001b[35m%d\u001b[0m bytes\n", totalSize);
         fos.close();
     }
 
     public static void main(String[] args) {
-        try {
-            Class.forName(Command.class.getName());
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
         String hostname;
 
         if (args.length == 0) {
